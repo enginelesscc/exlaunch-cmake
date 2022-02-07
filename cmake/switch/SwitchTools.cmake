@@ -207,8 +207,7 @@ function(__generate_nacp target)
         set(NACPFLAGS "")  # Purposefully empty.
     endif()
 
-    add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${target_we}.nacp
+    add_custom_target(create_nacp
             COMMAND ${nacptool} --create ${__HOMEBREW_APP_TITLE} ${__HOMEBREW_APP_AUTHOR} ${__HOMEBREW_APP_VERSION} ${target_we}.nacp ${NACPFLAGS}
             DEPENDS ${target}
             VERBATIM
@@ -237,8 +236,7 @@ function(__generate_npdm target)
     endif()
 
     # Build the NPDM file.
-    add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${target_we}.npdm
+    add_custom_target(create_npdm ALL
             COMMAND ${npdmtool} ${__HOMEBREW_JSON_CONFIG} ${CMAKE_CURRENT_BINARY_DIR}/${target_we}.npdm
             DEPENDS ${target} ${__HOMEBREW_JSON_CONFIG}
             VERBATIM

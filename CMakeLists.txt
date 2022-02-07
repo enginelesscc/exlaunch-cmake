@@ -32,15 +32,15 @@ macro(msys_to_cmake_path MsysPath ResultingPath)
 endmacro()
 
 ## Prepare subsdk ld
-set(SUBSDK_LD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/subsdk.ld)
+set(SUBSDK_LD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/module/subsdk.ld)
 execute_process(COMMAND uname OUTPUT_VARIABLE uname)
 if (uname MATCHES "^MINGW")
     msys_to_cmake_path(${SUBSDK_LD_PATH} SUBSDK_LD_PATH)
 endif ()
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/subsdk.specs.template ${CMAKE_CURRENT_BINARY_DIR}/subsdk.specs)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/module/subsdk.specs.template ${CMAKE_CURRENT_BINARY_DIR}/subsdk.specs)
 
 # Build nso
 add_nso_target(subsdk9)
-set_target_properties(subsdk9 PROPERTIES CONFIG_JSON "title.json")
+set_target_properties(subsdk9 PROPERTIES CONFIG_JSON "${CMAKE_CURRENT_SOURCE_DIR}/module/subsdk.json")
 __generate_npdm(subsdk9)
 set_target_properties(subsdk9 PROPERTIES LINK_FLAGS "-specs ${CMAKE_BINARY_DIR}/subsdk.specs -g ${ARCH}")
