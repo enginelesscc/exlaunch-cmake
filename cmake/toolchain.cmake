@@ -76,12 +76,12 @@ set(CMAKE_PREFIX_PATH ${PORTLIBS} CACHE PATH "Find libraries in the portlibs dir
 # Technically, the Switch does support shared libraries, but the toolchain doesn't.
 set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS FALSE)
 
-add_definitions(-DSWITCH -D__SWITCH__)
+add_definitions(-DSWITCH -D__SWITCH__ -D__RTLD_6XX__)
 
-set(ARCH "-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec")
+set(ARCH "-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fpic -fvisibility=hidden -D__thread='^-^'")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wall -O2 -ffunction-sections ${ARCH}" CACHE STRING "C flags")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -fno-rtti -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-unwind-tables" CACHE STRING "C++ flags")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wall -Werror -O3 -ffunction-sections -fdata-sections ${ARCH}" CACHE STRING "C flags")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -fno-rtti -fno-exceptions -fno-asynchronous-unwind-tables -fno-unwind-tables" CACHE STRING "C++ flags")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -x assembler-with-cpp -g ${ARCH}" CACHE STRING "ASM flags")
 # These flags are purposefully empty to use the default flags when invoking the
 # devkitA64 linker. Otherwise the linker may complain about duplicate flags.

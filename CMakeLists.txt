@@ -27,6 +27,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/SwitchTools.cmake)
 ## subsdk9
 set(CMAKE_EXECUTABLE_SUFFIX ".elf")
 add_executable(subsdk9 ${SOURCES_ASM} ${SOURCES_C} ${SOURCES_CXX})
+target_link_libraries(subsdk9 c)
 
 ## Prepare subsdk ld
 set(SUBSDK_LD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/module/subsdk9.ld)
@@ -40,4 +41,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/module/subsdk9.specs.template ${CMAKE
 add_nso_target(subsdk9)
 set_target_properties(subsdk9 PROPERTIES CONFIG_JSON "${CMAKE_CURRENT_BINARY_DIR}/subsdk9.json")
 __generate_npdm(subsdk9)
-set_target_properties(subsdk9 PROPERTIES LINK_FLAGS "-specs ${CMAKE_BINARY_DIR}/subsdk9.specs -g ${ARCH}")
+set_target_properties(subsdk9 PROPERTIES LINK_FLAGS "-specs ${CMAKE_BINARY_DIR}/subsdk9.specs -g ${ARCH} -nostartfiles")
