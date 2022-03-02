@@ -329,6 +329,25 @@ function(add_nso_target target)
     set_target_properties(${target} PROPERTIES LINK_FLAGS "-specs=${LIBNX}/switch.specs")
 endfunction()
 
+## Builds a .nso file from a given target (subsdk).
+##
+## NSOs are the main executable format on the Switch, however
+## rarely used outside of NSPs where they represent an important
+## component of the ExeFS.
+function(add_nso_target_subsdk target)
+    # Build the NSO file.
+    add_custom_command(
+            OUTPUT ${CMAKE_BINARY_DIR}/${target}
+            COMMAND ${elf2nso} $<TARGET_FILE:${target}> ${CMAKE_CURRENT_BINARY_DIR}/${target}
+            DEPENDS ${target}
+            VERBATIM
+    )
+
+    # Add the respective NSO target and set the required linker flags for the original target.
+    add_custom_target(${target}_nso ALL SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${target})
+    set_target_properties(${target} PROPERTIES LINK_FLAGS "-specs=${LIBNX}/switch.specs")
+endfunction()
+
 ## Builds a .nsp file from a given target.
 ##
 ## NSPs is the file format for system modules, which run as
