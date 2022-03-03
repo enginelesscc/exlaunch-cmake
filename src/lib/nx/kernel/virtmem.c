@@ -1,11 +1,11 @@
-#include "../types.h"
 #include "../result.h"
+#include "../types.h"
 // #include "mutex.h"
 #include "svc.h"
 #include "virtmem.h"
 
-#include <stdlib.h>
 #include "../abort.h"
+#include <stdlib.h>
 
 #define SEQUENTIAL_GUARD_REGION_SIZE 0x1000
 #define RANDOM_MAX_ATTEMPTS 0x200
@@ -16,8 +16,8 @@ typedef struct {
 } MemRegion;
 
 struct VirtmemReservation {
-    VirtmemReservation *next;
-    VirtmemReservation *prev;
+    VirtmemReservation* next;
+    VirtmemReservation* prev;
     MemRegion region;
 };
 /*
@@ -29,7 +29,7 @@ static MemRegion g_HeapRegion;
 static MemRegion g_AslrRegion;
 static MemRegion g_StackRegion;
 
-static VirtmemReservation *g_Reservations;
+static VirtmemReservation* g_Reservations;
 
 static bool g_IsLegacyKernel;
 
@@ -48,7 +48,7 @@ static Result _memregionInitWithInfo(MemRegion* r, InfoType id0_addr, InfoType i
 
         if (R_SUCCEEDED(rc)) {
             r->start = base;
-            r->end   = base + size;
+            r->end = base + size;
         }
     }
 
@@ -57,7 +57,7 @@ static Result _memregionInitWithInfo(MemRegion* r, InfoType id0_addr, InfoType i
 
 static void _memregionInitHardcoded(MemRegion* r, uintptr_t start, uintptr_t end) {
     r->start = start;
-    r->end   = end;
+    r->end = end;
 }
 
 NX_INLINE bool _memregionIsInside(MemRegion* r, uintptr_t start, uintptr_t end) {
@@ -83,7 +83,8 @@ NX_INLINE bool _memregionIsMapped(uintptr_t start, uintptr_t end, uintptr_t guar
     // Return true if there's anything mapped.
     uintptr_t memend = meminfo.addr + meminfo.size;
     if (meminfo.type != MemType_Unmapped || end > memend) {
-        if (out_end) *out_end = memend + guard;
+        if (out_end)
+            *out_end = memend + guard;
         return true;
     }
 
@@ -96,9 +97,10 @@ NX_INLINE bool _memregionIsReserved(uintptr_t start, uintptr_t end, uintptr_t gu
     end += guard;
 
     // Go through each reservation and check if any of them overlap the desired address range.
-    for (VirtmemReservation *rv = g_Reservations; rv; rv = rv->next) {
+    for (VirtmemReservation* rv = g_Reservations; rv; rv = rv->next) {
         if (_memregionOverlaps(&rv->region, start, end)) {
-            if (out_end) *out_end = rv->region.end + guard;
+            if (out_end)
+                *out_end = rv->region.end + guard;
             return true;
         }
     }
@@ -108,8 +110,8 @@ NX_INLINE bool _memregionIsReserved(uintptr_t start, uintptr_t end, uintptr_t gu
 
 static void* _memregionFindRandom(MemRegion* r, size_t size, size_t guard_size) {
     // Page align the sizes.
-    size = (size + 0xFFF) &~ 0xFFF;
-    guard_size = (guard_size + 0xFFF) &~ 0xFFF;
+    size = (size + 0xFFF) & ~0xFFF;
+    guard_size = (guard_size + 0xFFF) & ~0xFFF;
 
     // Ensure the requested size isn't greater than the memory region itself...
     uintptr_t region_size = r->end - r->start;
@@ -118,7 +120,7 @@ static void* _memregionFindRandom(MemRegion* r, size_t size, size_t guard_size) 
 
     // Main allocation loop.
     uintptr_t aslr_max_page_offset = (region_size - size) >> 12;
-    for (unsigned i = 0; i < RANDOM_MAX_ATTEMPTS; i ++) {
+    for (unsigned i = 0; i < RANDOM_MAX_ATTEMPTS; i++) {
         // Calculate a random memory range outside reserved areas.
         uintptr_t cur_addr;
         for (;;) {
@@ -175,8 +177,7 @@ void virtmemSetup(void) {
         rc = _memregionInitWithInfo(&g_StackRegion, InfoType_StackRegionAddress, InfoType_StackRegionSize);
         if (R_FAILED(rc))
             exl_abort(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
-    }
-    else {
+    } else {
         // [1.0.0] doesn't expose aslr/stack region information so we have to do this dirty hack to detect it.
         // Forgive me.
         g_IsLegacyKernel = true;
@@ -186,14 +187,12 @@ void virtmemSetup(void) {
             // Thus we are 32-bit.
             _memregionInitHardcoded(&g_AslrRegion, 0x200000ull, 0x100000000ull);
             _memregionInitHardcoded(&g_StackRegion, 0x200000ull, 0x40000000ull);
-        }
-        else if (R_VALUE(rc) == KERNELRESULT(InvalidMemoryRange)) {
+        } else if (R_VALUE(rc) == KERNELRESULT(InvalidMemoryRange)) {
             // Invalid dst-address error means our 36-bit src-address was valid.
             // Thus we are 36-bit.
             _memregionInitHardcoded(&g_AslrRegion, 0x8000000ull, 0x1000000000ull);
             _memregionInitHardcoded(&g_StackRegion, 0x8000000ull, 0x80000000ull);
-        }
-        else {
+        } else {
             // Wat.
             exl_abort(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
         }
@@ -202,8 +201,8 @@ void virtmemSetup(void) {
 
 /* TODO: thread safety. */
 void virtmemLock(void) {
-    /* 
-    mutexLock(&g_VirtmemMutex); 
+    /*
+    mutexLock(&g_VirtmemMutex);
     */
 }
 
@@ -242,10 +241,10 @@ VirtmemReservation* virtmemAddReservation(void* mem, size_t size) {
     VirtmemReservation* rv = (VirtmemReservation*)malloc(sizeof(VirtmemReservation));
     if (rv) {
         rv->region.start = (uintptr_t)mem;
-        rv->region.end   = rv->region.start + size;
-        rv->next         = g_Reservations;
-        rv->prev         = NULL;
-        g_Reservations   = rv;
+        rv->region.end = rv->region.start + size;
+        rv->next = g_Reservations;
+        rv->prev = NULL;
+        g_Reservations = rv;
         if (rv->next)
             rv->next->prev = rv;
     }

@@ -69,6 +69,10 @@ void exl_module_fini(void) {}
 #include <lib/util/soc.hpp>
 
 extern "C" void exl_init() {
+/* Getting the SOC type in an application context is more effort than it's worth. */
+#ifndef EXL_AS_MODULE
+    exl::util::impl::InitSocType();
+#endif
     exl::util::impl::InitMemLayout();
     virtmemSetup();
     exl::patch::impl::InitPatcherImpl();

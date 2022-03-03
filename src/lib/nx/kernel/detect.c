@@ -1,6 +1,6 @@
 // Copyright 2017 plutoo
-#include "../types.h"
 #include "detect.h"
+#include "../types.h"
 //#include "mutex.h"
 #include "svc.h"
 #include <malloc.h>
@@ -13,8 +13,7 @@ static int g_Version;
 // static Mutex g_JitKernelPatchMutex;
 // static bool g_JitKernelPatchDetected;
 
-static void _CacheVersion(void)
-{
+static void _CacheVersion(void) {
     if (__atomic_load_n(&g_VersionCached, __ATOMIC_SEQ_CST))
         return;
 
@@ -32,13 +31,14 @@ static void _CacheVersion(void)
         g_Version = 3;
     if (R_VALUE(svcGetInfo(&tmp, InfoType_InitialProcessIdRange, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
         g_Version = 4;
-    if (R_VALUE(svcGetInfo(&tmp, InfoType_UserExceptionContextAddress, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
+    if (R_VALUE(svcGetInfo(&tmp, InfoType_UserExceptionContextAddress, INVALID_HANDLE, 0)) !=
+        KERNELRESULT(InvalidEnumValue))
         g_Version = 5;
-    if (R_VALUE(svcGetInfo(&tmp, InfoType_TotalNonSystemMemorySize, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
+    if (R_VALUE(svcGetInfo(&tmp, InfoType_TotalNonSystemMemorySize, INVALID_HANDLE, 0)) !=
+        KERNELRESULT(InvalidEnumValue))
         g_Version = 6;
 
     __atomic_store_n(&g_VersionCached, true, __ATOMIC_SEQ_CST);
-
 }
 int detectKernelVersion(void) {
     _CacheVersion();

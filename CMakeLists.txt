@@ -12,7 +12,7 @@ enable_language(ASM C CXX)
 
 ## Title Id
 set(CONFIG_TITLE_ID 0x0100801011c3e000)
-add_compile_definitions(EXL_PROGRAM_ID=${CONFIG_TITLE_ID})
+add_compile_definitions(EXL_PROGRAM_ID=${CONFIG_TITLE_ID} EXL_LOAD_KIND=Module EXL_LOAD_KIND_ENUM=2)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/module/subsdk9.json.template ${CMAKE_CURRENT_BINARY_DIR}/subsdk9.json)
 
 ## Project sources
