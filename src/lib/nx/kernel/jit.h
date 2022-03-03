@@ -6,12 +6,12 @@
  */
 #pragma once
 #include "../types.h"
+#include "virtmem.h"
 
 /// JIT implementation type.
 typedef enum {
-    JitType_CodeMemory,  ///< JIT supported using svcSetProcessMemoryPermission
-    JitType_JitMemory,   ///< JIT supported using [4.0.0+] code-memory syscalls (this isn't usable on [5.0.0+] so
-                         ///< JitType_CodeMemory is used instead).
+    JitType_SetProcessMemoryPermission, ///< JIT supported using svcSetProcessMemoryPermission
+    JitType_CodeMemory,                 ///< JIT supported using [4.0.0+] CodeMemory syscalls
 } JitType;
 
 /// JIT buffer object.
@@ -22,7 +22,10 @@ typedef struct {
     void* rx_addr;
     void* rw_addr;
     bool is_executable;
-    Handle handle;
+    union {
+        Handle handle;
+        VirtmemReservation* rv;
+    };
 } Jit;
 
 /**
@@ -31,7 +34,7 @@ typedef struct {
  * @param size Size of the JIT buffer.
  * @return Result code.
  */
-Result jitCreate(Jit* j, void* buf, size_t size);
+Result jitCreate(Jit* j, void* rx_addr, size_t size);
 
 /**
  * @brief Transition a JIT buffer to have writable permission.
@@ -59,11 +62,11 @@ Result jitClose(Jit* j);
  * @param j JIT buffer.
  * @return Pointer to alias of the JIT buffer that can be written to.
  */
-void* jitGetRwAddr(Jit* j);
+NX_CONSTEXPR void* jitGetRwAddr(Jit* j) { return j->rw_addr; }
 
 /**
  * @brief Gets the address of the executable memory alias of a JIT buffer.
  * @param j JIT buffer.
  * @return Pointer to alias of the JIT buffer that can be executed.
  */
-void* jitGetRxAddr(Jit* j);
+NX_CONSTEXPR void* jitGetRxAddr(Jit* j) { return j->rx_addr; }

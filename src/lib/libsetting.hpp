@@ -3,5 +3,5 @@
 #include "types.h"
 
 namespace exl::setting {
-    constexpr u64 ProgramId = EXL_PROGRAM_ID;
+    static constexpr u64 ProgramId = EXL_PROGRAM_ID;
 };

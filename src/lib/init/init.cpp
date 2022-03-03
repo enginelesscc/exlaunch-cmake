@@ -3,52 +3,73 @@
 #include "program/setting.hpp"
 
 extern "C" {
-    /* These magic symbols are provided by the linker.  */
-    extern void (*__preinit_array_start []) (void) __attribute__((weak));
-    extern void (*__preinit_array_end []) (void) __attribute__((weak));
-    extern void (*__init_array_start []) (void) __attribute__((weak));
-    extern void (*__init_array_end []) (void) __attribute__((weak));
+/* These magic symbols are provided by the linker.  */
+extern void (*__preinit_array_start[])(void) __attribute__((weak));
+extern void (*__preinit_array_end[])(void) __attribute__((weak));
+extern void (*__init_array_start[])(void) __attribute__((weak));
+extern void (*__init_array_end[])(void) __attribute__((weak));
 
-    /* Exported by program. */
-    extern void exl_main(void*, void*);
+/* Exported by program. */
+extern void exl_main(void*, void*);
+/* Optionally exported by program. */
+__attribute__((weak)) extern void exl_init();
 
-    char __fake_heap[exl::setting::HeapSize];
+#ifdef EXL_USE_FAKEHEAP
 
-    void __init_heap() {
-        extern char * fake_heap_start;
-        extern char * fake_heap_end;
+char __fake_heap[exl::setting::HeapSize];
 
-        fake_heap_start = __fake_heap;
-        fake_heap_end   = __fake_heap + exl::setting::HeapSize;
-    }
-    
-    void __init_array(void) {
-        size_t count;
-        size_t i;
+void __init_heap() {
+    extern char* fake_heap_start;
+    extern char* fake_heap_end;
 
-        count = __preinit_array_end - __preinit_array_start;
-        for (i = 0; i < count; i++)
-            __preinit_array_start[i] ();
+    fake_heap_start = __fake_heap;
+    fake_heap_end = __fake_heap + exl::setting::HeapSize;
+}
 
-        count = __init_array_end - __init_array_start;
-        for (i = 0; i < count; i++)
-            __init_array_start[i] ();
-    }
-    
-    /* Called when loaded as a module with RTLD. */
-    void exl_module_init() {
-        __init_heap();
-        virtmemSetup();
-        exl_main(NULL, NULL);
-    }
+#endif
 
-    /* Called when loaded as the entrypoint of the process, like RTLD. */
-    void exl_entrypoint_init(void* x0, void* x1) {
-        __init_heap();
-        __init_array();
-        virtmemSetup();
-        exl_main(x0, x1);
-    }
+void __init_array(void) {
+    size_t count;
+    size_t i;
 
-    void exl_module_fini(void) {}
+    count = __preinit_array_end - __preinit_array_start;
+    for (i = 0; i < count; i++)
+        __preinit_array_start[i]();
+
+    count = __init_array_end - __init_array_start;
+    for (i = 0; i < count; i++)
+        __init_array_start[i]();
+}
+
+/* Called when loaded as a module with RTLD. */
+void exl_module_init() {
+#ifdef EXL_USE_FAKEHEAP
+    __init_heap();
+#endif
+    exl_init();
+    __init_array();
+    exl_main(NULL, NULL);
+}
+
+/* Called when loaded as the entrypoint of the process, like RTLD. */
+void exl_entrypoint_init(void* x0, void* x1) {
+#ifdef EXL_USE_FAKEHEAP
+    __init_heap();
+#endif
+    exl_init();
+    __init_array();
+    exl_main(x0, x1);
+}
+
+void exl_module_fini(void) {}
+}
+
+#include <lib/patch/patcher_impl.hpp>
+#include <lib/util/mem_layout.hpp>
+#include <lib/util/soc.hpp>
+
+extern "C" void exl_init() {
+    exl::util::impl::InitMemLayout();
+    virtmemSetup();
+    exl::patch::impl::InitPatcherImpl();
 }

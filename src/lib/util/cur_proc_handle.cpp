@@ -3,12 +3,12 @@
 #include <cstring>
 
 namespace exl::util::proc_handle {
-    
+
     namespace {
-        
+
         Handle s_Handle = INVALID_HANDLE;
 
-        void ReceiveProcessHandleThreadMain(void *session_handle_ptr) {
+        void ReceiveProcessHandleThreadMain(void* session_handle_ptr) {
             // Convert the argument to a handle we can use.
             Handle session_handle = (Handle)(uintptr_t)session_handle_ptr;
 
@@ -18,7 +18,7 @@ namespace exl::util::proc_handle {
             R_ABORT_UNLESS(svcReplyAndReceive(&idx, &session_handle, 1, INVALID_HANDLE, UINT64_MAX));
 
             // Set the process handle.
-            s_Handle = ((u32 *)armGetTls())[3];
+            s_Handle = ((u32*)armGetTls())[3];
 
             // Close the session.
             svcCloseHandle(session_handle);
@@ -27,7 +27,8 @@ namespace exl::util::proc_handle {
             svcExitThread();
 
             // This code will never execute.
-            while (true);
+            while (true)
+                ;
         }
 
         void GetViaIpcTrick(void) {
@@ -39,13 +40,15 @@ namespace exl::util::proc_handle {
 
             // Create a new thread to receive our handle.
             Handle thread_handle;
-            R_ABORT_UNLESS(svcCreateThread(&thread_handle, (void*) &ReceiveProcessHandleThreadMain, (void *)(uintptr_t)server_handle, temp_thread_stack + sizeof(temp_thread_stack), 0x20, 3));
+            R_ABORT_UNLESS(svcCreateThread(&thread_handle, (void*)&ReceiveProcessHandleThreadMain,
+                                           (void*)(uintptr_t)server_handle,
+                                           temp_thread_stack + sizeof(temp_thread_stack), 0x20, 2));
 
             // Start the new thread.
             R_ABORT_UNLESS(svcStartThread(thread_handle));
 
             // Send the message.
-            static const u32 SendProcessHandleMessage[4] = { 0x00000000, 0x80000000, 0x00000002, CUR_PROCESS_HANDLE };
+            static const u32 SendProcessHandleMessage[4] = {0x00000000, 0x80000000, 0x00000002, CUR_PROCESS_HANDLE};
             memcpy(armGetTls(), SendProcessHandleMessage, sizeof(SendProcessHandleMessage));
             svcSendSyncRequest(client_handle);
 
@@ -64,17 +67,17 @@ namespace exl::util::proc_handle {
 
             return result::Success;
         }
-    }
+    } // namespace
 
     Handle Get() {
-        if(s_Handle == INVALID_HANDLE) {
+        if (s_Handle == INVALID_HANDLE) {
             /* Try to ask mesosphere for our process handle. */
             Result r = GetViaMesosphere();
 
             /* Fallback to an IPC trick if mesosphere is old/not present. */
-            if(R_FAILED(r))
+            if (R_FAILED(r))
                 GetViaIpcTrick();
         }
         return s_Handle;
     }
-};
+}; // namespace exl::util::proc_handle
